@@ -180,20 +180,6 @@ Or use Qdrant's web UI at `http://localhost:6333/dashboard`.
 - For localhost: `http://localhost:6333`
 - Trailing slashes are automatically handled
 
-## 🏗️ Architecture
-
-```
-qdrant-dump/
-├── src/
-│   ├── main.rs      # CLI argument parsing and orchestration
-│   ├── client.rs    # HTTP client for Qdrant API
-│   ├── dump.rs      # Core dump logic (create & download snapshots)
-│   ├── models.rs    # Data structures for API responses
-│   └── utils.rs     # Utility functions (directory creation, etc.)
-├── Cargo.toml       # Project dependencies
-├── setup_test_collections.py  # Python script to create test data
-└── quick_test_setup.sh        # Bash script for quick testing
-```
 
 ## 🔮 Future Enhancements
 
@@ -210,18 +196,6 @@ Potential features for future releases:
 - [ ] Configuration file support
 - [ ] Verbose logging mode
 
-## 📝 License
-
-[Add your license here]
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 🙏 Acknowledgments
-
-- Inspired by MongoDB's `mongodump` tool
-- Built for the [Qdrant](https://qdrant.tech) vector database
 
 ## 📚 Related Tools
 
@@ -230,6 +204,5 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
 
-**Made with ❤️ for the Qdrant community**
 
 # qdrant-dump
