@@ -38,124 +38,18 @@ Follow instructions at: https://qdrant.tech/documentation/quick-start/
 cargo build --release
 ```
 
-### 3. Create Test Collections with Real Data
+### 3. Create Test Collections (one command)
 
-First, let's create realistic collections that you'd actually use in production:
-
-**Using Python (recommended):**
-```python
-# setup_test_collections.py
-from qdrant_client import QdrantClient
-from qdrant_client.http import models
-import random
-
-client = QdrantClient("localhost", port=6333)
-
-# Create realistic collections
-collections = [
-    {
-        "name": "product_embeddings",
-        "size": 128,
-        "description": "E-commerce product search vectors"
-    },
-    {
-        "name": "user_profiles",
-        "size": 256,
-        "description": "User embedding vectors for recommendations"
-    },
-    {
-        "name": "document_search",
-        "size": 384,
-        "description": "Document embeddings for semantic search"
-    }
-]
-
-for col in collections:
-    print(f"Creating collection: {col['name']}")
-    client.create_collection(
-        collection_name=col["name"],
-        vectors_config=models.VectorParams(
-            size=col["size"],
-            distance=models.Distance.COSINE
-        )
-    )
-    
-    # Add some sample points
-    points = [
-        models.PointStruct(
-            id=i,
-            vector=[random.random() for _ in range(col["size"])],
-            payload={"name": f"Item {i}", "category": random.choice(["A", "B", "C"])}
-        )
-        for i in range(100)  # 100 points per collection
-    ]
-    client.upsert(collection_name=col["name"], points=points)
-    print(f"✅ Created {col['name']} with 100 points")
-
-print("\n✅ All test collections created!")
-```
-
-**Using curl (alternative):**
-```bash
-# Create product_embeddings collection
-curl -X PUT "http://localhost:6333/collections/product_embeddings" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "vectors": {
-      "size": 128,
-      "distance": "Cosine"
-    }
-  }'
-
-# Create user_profiles collection  
-curl -X PUT "http://localhost:6333/collections/user_profiles" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "vectors": {
-      "size": 256,
-      "distance": "Cosine"
-    }
-  }'
-
-# Create document_search collection
-curl -X PUT "http://localhost:6333/collections/document_search" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "vectors": {
-      "size": 384,
-      "distance": "Cosine"
-    }
-  }'
-```
-
-Run the Python script:
-```bash
-pip install qdrant-client
-python setup_test_collections.py
-```
-
-**Or use the provided setup script:**
-
-Option 1: Using Python (requires pip):
-```bash
-pip install qdrant-client
-python3 setup_test_collections.py
-```
-
-Option 2: Using curl only (no Python needed):
+Use the provided setup script (no Python required):
 ```bash
 chmod +x quick_test_setup.sh
 ./quick_test_setup.sh
 ```
 
-This quick setup script will:
-- Start Qdrant if not running
-- Create the three test collections using only curl
-
-This will create three collections with realistic names:
-- `product_embeddings` (128-dim vectors, 100 points) - for e-commerce product search
-- `user_profiles` (256-dim vectors, 100 points) - for user recommendations  
-- `document_search` (384-dim vectors, 100 points) - for semantic document search
+This will start Qdrant (if not running) and create three collections:
+- `product_embeddings` (128-dim)
+- `user_profiles` (256-dim)
+- `document_search` (384-dim)
 
 ## Test Scenarios
 
@@ -167,15 +61,15 @@ This will create three collections with realistic names:
 ./target/release/qdrant-dump \
   --url http://localhost:6333 \
   --collection product_embeddings \
-  --out ./test_backups \
+  --out ./backups \
   --timestamp
 
 # Verify:
 # - Backup directory created with timestamp
 # - Snapshot file exists: product_embeddings_<snapshot-name>
-# - File size > 0 (check with: ls -lh ./test_backups/*/product_embeddings_*)
+# - File size > 0 (check with: ls -lh ./backups/*/product_embeddings_*)
 # - File has correct naming pattern
-ls -lh ./test_backups/*/
+ls -lh ./backups/*/
 ```
 
 #### Test 2: Dump All Collections
@@ -184,7 +78,7 @@ ls -lh ./test_backups/*/
 ./target/release/qdrant-dump \
   --url http://localhost:6333 \
   --collection all \
-  --out ./test_backups
+  --out ./backups
 
 # Verify:
 # - All 3 collections dumped
@@ -194,7 +88,7 @@ ls -lh ./test_backups/*/
 #   * document_search_<snapshot-name>
 # - No duplicate files
 # - Progress messages shown for each
-ls -lh ./test_backups/
+ls -lh ./backups/
 ```
 
 #### Test 3: Empty Collection
@@ -208,10 +102,10 @@ curl -X PUT "http://localhost:6333/collections/empty_test" \
 ./target/release/qdrant-dump \
   --url http://localhost:6333 \
   --collection empty_test \
-  --out ./test_backups
+  --out ./backups
 
 # Verify snapshot is created (even if empty)
-ls -lh ./test_backups/empty_test_*
+ls -lh ./backups/empty_test_*
 ```
 
 ### Error Handling Tests
@@ -257,56 +151,29 @@ curl -X PUT "http://localhost:6333/collections/prod-data_v2.1" \
 ./target/release/qdrant-dump \
   --url http://localhost:6333 \
   --collection "prod-data_v2.1" \
-  --out ./test_backups
+  --out ./backups
 
 # Expected: Should handle URL encoding properly
-ls -lh ./test_backups/prod-data_v2.1_*
+ls -lh ./backups/prod-data_v2.1_*
 ```
 
 ### Edge Cases
 
-#### Test 8: Large Collection
+#### Test 8: Performance Sanity Check
 ```bash
-# Create a large collection (10K points)
-python3 << EOF
-from qdrant_client import QdrantClient
-from qdrant_client.http import models
-import random
-
-client = QdrantClient("localhost", port=6333)
-client.create_collection(
-    collection_name="large_dataset",
-    vectors_config=models.VectorParams(size=128, distance=models.Distance.COSINE)
-)
-
-# Insert 10,000 points in batches
-batch_size = 100
-for batch_start in range(0, 10000, batch_size):
-    points = [
-        models.PointStruct(
-            id=i,
-            vector=[random.random() for _ in range(128)],
-            payload={"batch": batch_start // batch_size}
-        )
-        for i in range(batch_start, min(batch_start + batch_size, 10000))
-    ]
-    client.upsert(collection_name="large_dataset", points=points)
-    print(f"Inserted batch {batch_start // batch_size + 1}/100")
-
-print("✅ Large collection created!")
-EOF
-
-# Run dump and measure time
+# Measure dump time for existing collections
 time ./target/release/qdrant-dump \
   --url http://localhost:6333 \
-  --collection large_dataset \
-  --out ./test_backups
+  --collection product_embeddings \
+  --out ./backups
 
-# Verify:
-# - Download completes
-# - File size is reasonable (check with: ls -lh)
-# - Progress indicators work
-ls -lh ./test_backups/large_dataset_*
+time ./target/release/qdrant-dump \
+  --url http://localhost:6333 \
+  --collection all \
+  --out ./backups
+
+# Verify file sizes look reasonable
+ls -lh ./backups/*/*.snapshot
 ```
 
 #### Test 9: Concurrent Snapshots
@@ -335,17 +202,16 @@ ls -lh ./test1/ ./test2/
 ./target/release/qdrant-dump \
   --url http://localhost:6333 \
   --collection product_embeddings \
-  --out ./test_backups
+  --out ./backups
 
 # Verify snapshot format is valid
-SNAPSHOT_FILE=$(ls ./test_backups/product_embeddings_* | head -1)
-file "$SNAPSHOT_FILE"
+SNAPSHOT_FILE=$(ls ./backups/*/product_embeddings_* | head -1)
 du -h "$SNAPSHOT_FILE"  # Check file size
 
 # Verify it's not empty and appears to be binary data (Qdrant snapshots are binary)
 if [ -s "$SNAPSHOT_FILE" ]; then
     echo "✅ Snapshot file is not empty"
-    head -c 100 "$SNAPSHOT_FILE" | file -  # Check first bytes
+    head -c 64 "$SNAPSHOT_FILE" | hexdump -C | head -3  # preview bytes
 fi
 ```
 
