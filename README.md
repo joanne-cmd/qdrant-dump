@@ -33,8 +33,11 @@ The binary will be available at `./target/release/qdrant-dump`.
 
 ### Install Globally (Optional)
 
+Install and run from anywhere:
 ```bash
 cargo install --path .
+export PATH="$HOME/.cargo/bin:$PATH"  
+qdrant-dump --help                     
 ```
 
 ## 📖 Usage
