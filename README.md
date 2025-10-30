@@ -105,13 +105,8 @@ The snapshot files are native Qdrant snapshot format and can be restored using Q
 docker run -d -p 6333:6333 --name qdrant qdrant/qdrant
 ```
 
-2. **Create test collections:**
+2. **Create test collections :**
 ```bash
-# Using the provided setup script (requires Python)
-pip install qdrant-client
-python3 setup_test_collections.py
-
-# Or using curl (no Python needed)
 chmod +x quick_test_setup.sh
 ./quick_test_setup.sh
 ```
